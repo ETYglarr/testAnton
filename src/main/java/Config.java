@@ -9,14 +9,16 @@ import org.testng.annotations.BeforeMethod;
 
 import java.net.URL;
 import java.time.Duration;
-import java.util.Properties;
+import java.util.HashMap;
 
 public class Config {
 
+    //Переключатель среды выполнения теста
+    private final boolean local = true;
     protected WebDriver driver;
     protected WebDriverWait wait;
 
-    public static String remote_url_chrome = "http://localhost:4445/wd/hub";
+    private static final String remote_url_chrome = "http://localhost:4444/wd/hub";
 
     @BeforeMethod
     public void browserConfig() throws Exception {
@@ -26,9 +28,18 @@ public class Config {
         options.addArguments("disable-dev-shm-usage");
         options.addArguments("--lang=ru");
 
-        if (System.getProperty("os.name").contains("Windows")) {
-            
+        if (local) {
             WebDriverManager.chromedriver().setup();
+            setDriver(new ChromeDriver(options));
+        }
+        else {
+            options.setCapability("browserVersion", "79.0");
+            options.setCapability("selenoid:options", new HashMap<String, Object>() {
+                {
+                    put("enableVNC", true);
+                    put("enableVideo", false);
+                }
+            });
             setDriver(new RemoteWebDriver(new URL(remote_url_chrome), options));
         }
         wait = new WebDriverWait(driver, Duration.ofSeconds(15));
